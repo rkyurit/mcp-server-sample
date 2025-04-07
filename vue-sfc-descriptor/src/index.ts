@@ -1,87 +1,150 @@
 import path from "path";
-import {
-  parseVueComponent,
-  printComponentInfo,
-  scanComponentsDirectory,
-  printComponentsList,
-  printComponentInfoAsJson,
-  printComponentsListAsJson,
-} from "./parse";
+import { z } from "zod";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import fs from "fs";
+import dotenv from "dotenv";
+import { parseVueComponent, scanComponentsDirectory } from "./parse";
 
-async function main() {
-  // コマンドライン引数を取得
-  const [, , command, target, format] = process.argv;
-  const outputJson = format === "--json";
+// 環境変数の読み込み
+dotenv.config();
 
-  if (!command) {
-    printUsage();
-    process.exit(1);
-  }
+// コンポーネントディレクトリのパスを取得
+const COMPONENTS_DIR = process.env.COMPONENTS_DIR || "sample";
 
-  try {
-    switch (command) {
-      case "parse":
-        // 単一のVueファイルをパース
-        if (!target) {
-          console.error("Vueファイルのパスを指定してください。");
-          printUsage();
-          process.exit(1);
-        }
+// MCPサーバーの設定
+const server = new McpServer({
+  name: "vue-sfc-descriptor-mcp-server",
+  version: "1.0.0",
+});
 
-        const absoluteFilePath = path.resolve(process.cwd(), target);
-        const info = await parseVueComponent(absoluteFilePath);
+// 単一コンポーネント解析ツール
+server.tool(
+  "get-component",
+  "Vue単一ファイルコンポーネント(SFC)ファイルを解析し、コンポーネントの情報（役割、Props、Emits）を取得します",
+  {
+    fileName: z
+      .string()
+      .describe("解析するVueコンポーネントのファイル名（.vueは省略可）"),
+  },
+  async ({ fileName }) => {
+    try {
+      // ファイル名に .vue が含まれていない場合は追加
+      const componentFileName = fileName.endsWith(".vue")
+        ? fileName
+        : `${fileName}.vue`;
 
-        if (outputJson) {
-          printComponentInfoAsJson(info);
-        } else {
-          printComponentInfo(info);
-        }
-        break;
+      // コンポーネントディレクトリからファイルのフルパスを生成
+      const absoluteFilePath = path.resolve(
+        process.cwd(),
+        COMPONENTS_DIR,
+        componentFileName
+      );
 
-      case "scan":
-        // ディレクトリ内のVueファイルを走査
-        if (!target) {
-          console.error("ディレクトリパスを指定してください。");
-          printUsage();
-          process.exit(1);
-        }
+      // ファイルが存在するか確認
+      if (!fs.existsSync(absoluteFilePath)) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `エラー: ファイル '${componentFileName}' が見つかりません。指定されたパス: ${absoluteFilePath}`,
+            },
+          ],
+        };
+      }
 
-        const absoluteDirPath = path.resolve(process.cwd(), target);
-        const components = await scanComponentsDirectory(absoluteDirPath);
+      const info = await parseVueComponent(absoluteFilePath);
 
-        if (outputJson) {
-          printComponentsListAsJson(components);
-        } else {
-          printComponentsList(components);
-        }
-        break;
-
-      default:
-        console.error(`不明なコマンド: ${command}`);
-        printUsage();
-        process.exit(1);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(info, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `エラーが発生しました: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          },
+        ],
+      };
     }
-  } catch (error) {
-    console.error("エラーが発生しました:", error);
-    process.exit(1);
   }
-}
+);
+
+// ディレクトリスキャンツール（パラメータなし、環境変数のディレクトリのみを使用）
+server.tool(
+  "list-components",
+  "環境変数で指定されたディレクトリ内のVueコンポーネントを再帰的に走査し、コンポーネント一覧を取得します",
+  {},
+  async () => {
+    try {
+      const absoluteDirPath = path.resolve(process.cwd(), COMPONENTS_DIR);
+
+      // ディレクトリが存在するか確認
+      if (!fs.existsSync(absoluteDirPath)) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `エラー: ディレクトリ '${COMPONENTS_DIR}' が見つかりません。指定されたパス: ${absoluteDirPath}`,
+            },
+          ],
+        };
+      }
+
+      const components = await scanComponentsDirectory(absoluteDirPath);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(components, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `エラーが発生しました: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          },
+        ],
+      };
+    }
+  }
+);
 
 /**
- * 使用方法を表示
+ * メイン関数 - MCPサーバーを起動
  */
-function printUsage(): void {
-  console.log("使用方法:");
-  console.log(
-    "  node dist/index.js parse <Vueファイルのパス> [--json]   - 単一のVueファイルを解析"
-  );
-  console.log(
-    "  node dist/index.js scan <ディレクトリのパス> [--json]   - ディレクトリ内のVueファイルを一覧表示"
-  );
-  console.log("");
-  console.log("オプション:");
-  console.log("  --json  結果をJSON形式で出力");
+async function main() {
+  try {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error(
+      `Vue SFC Descriptor MCP Server 実行中 - ${new Date().toLocaleString()}`
+    );
+    console.error(`コンポーネントディレクトリ: ${COMPONENTS_DIR}`);
+  } catch (error) {
+    console.error("MCPサーバーの起動中にエラーが発生しました:", error);
+    process.exit(1);
+  }
 }
 
-// エントリーポイント
-main();
+// プログラム実行
+if (require.main === module) {
+  main().catch((error) => {
+    console.error("Fatal error in main():", error);
+    process.exit(1);
+  });
+}

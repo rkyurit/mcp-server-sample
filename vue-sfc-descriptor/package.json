@@ -1,18 +1,15 @@
 {
   "name": "vue-sfc-descriptor",
   "version": "1.0.0",
-  "main": "dist/index.js",
+  "main": "build/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "parse": "tsc && node dist/index.js parse",
-    "scan": "tsc && node dist/index.js scan",
-    "dev": "tsc && node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node build/index.js",
+    "dev": "tsc --watch"
   },
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Vue単一ファイルコンポーネント（SFC）解析用MCPサーバー",
   "devDependencies": {
     "@types/node": "^22.14.0",
     "typescript": "^5.8.3"

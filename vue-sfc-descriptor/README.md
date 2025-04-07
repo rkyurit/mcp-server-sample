@@ -1,57 +1,40 @@
 # Vue SFC Descriptor
 
-Vue 単一ファイルコンポーネント（SFC）を解析して、コンポーネントの情報を抽出するツールです。
+指定したディレクトリに存在する Vue コンポーネントのファイル名や Props/Emits などを取得する。
 
 ## インストール
 
 ```bash
+cd vue-sfc-descriptor
 npm install
+
+# 環境設定
+cp .env.sample .env
+# .env ファイルを編集してコンポーネントディレクトリを設定
+# COMPONENTS_DIR=sample
+
+# ビルド
 npm run build
 ```
 
-## 使用方法
+## 動作確認
 
-### 単一の Vue ファイルを解析
-
-```bash
-# コマンド形式
-npm run parse <Vueファイルパス> [-- --json]
-
-# 例
-npm run parse sample/McpButton.vue
-npm run parse sample/McpButton.vue -- --json  # JSON形式で出力
+```
+npx @modelcontextprotocol/inspector node ./build/index.js
 ```
 
-### ディレクトリ内の Vue コンポーネントを一覧表示
+## 提供されるツール
 
-```bash
-# コマンド形式
-npm run scan <ディレクトリパス> [-- --json]
+1. **get-component**: 指定した Vue コンポーネントの情報を取得
 
-# 例
-npm run scan sample/
-npm run scan sample/ -- --json  # JSON形式で出力
-```
+   - パラメータ: `fileName` - Vue コンポーネントのファイル名（.vue は省略可）
+   - 環境変数で指定されたディレクトリから自動的にコンポーネントを検索します
 
-## 抽出される情報
+2. **list-components**: ディレクトリ内の Vue コンポーネントの一覧を取得
+   - パラメータ: なし（環境変数 `COMPONENTS_DIR` で指定されたディレクトリを使用）
+
+## 解析する Vue コンポーネントの規約
 
 - **コンポーネントの役割**: スクリプトタグ直下のコメントに記述された説明
 - **Props**: `コンポーネント名Props` というインターフェースで定義されたプロパティ情報
 - **Emits**: `コンポーネント名Emits` というインターフェースで定義されたイベント情報
-
-## 出力形式
-
-### テキスト形式 (デフォルト)
-
-人間が読みやすい形式で情報を表示します。
-
-### JSON 形式 (`--json`)
-
-プログラムで処理しやすい JSON 形式で情報を出力します。他のツールとの連携やデータ処理に便利です。
-
-## 開発
-
-```bash
-# 開発ビルド
-npm run dev
-```

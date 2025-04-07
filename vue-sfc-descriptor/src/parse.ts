@@ -215,46 +215,6 @@ function extractEmits(
 }
 
 /**
- * コンポーネント情報をコンソールに出力する
- * @param info コンポーネント情報
- */
-export function printComponentInfo(info: ComponentInfo): void {
-  console.log("== コンポーネント情報 ==");
-  console.log(`【役割】\n${info.description}\n`);
-
-  console.log("【Props】");
-  if (info.props.length === 0) {
-    console.log("定義なし");
-  } else {
-    info.props.forEach((prop) => {
-      console.log(
-        `- ${prop.name}: ${prop.type}${prop.required ? "（必須）" : "（任意）"}`
-      );
-      console.log(`  ${prop.description}`);
-    });
-  }
-  console.log("");
-
-  console.log("【Emits】");
-  if (info.emits.length === 0) {
-    console.log("定義なし");
-  } else {
-    info.emits.forEach((emit) => {
-      console.log(`- ${emit.name}: [${emit.params}]`);
-      console.log(`  ${emit.description}`);
-    });
-  }
-}
-
-/**
- * コンポーネント情報をJSONフォーマットで出力する
- * @param info コンポーネント情報
- */
-export function printComponentInfoAsJson(info: ComponentInfo): void {
-  console.log(JSON.stringify(info, null, 2));
-}
-
-/**
  * 指定されたディレクトリ内のすべてのVueコンポーネントを再帰的に走査し、
  * 各コンポーネントの名前と説明を取得する
  *
@@ -304,54 +264,4 @@ export async function scanComponentsDirectory(
 
   // 名前順にソート
   return components.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/**
- * コンポーネント一覧情報をコンソールに出力する
- * @param components コンポーネント情報の配列
- */
-export function printComponentsList(components: ComponentSummary[]): void {
-  console.log("== コンポーネント一覧 ==");
-  console.log(`合計: ${components.length}件\n`);
-
-  if (components.length === 0) {
-    console.log("コンポーネントが見つかりませんでした。");
-    return;
-  }
-
-  components.forEach((component, index) => {
-    console.log(`${index + 1}. ${component.name}`);
-
-    if (component.description) {
-      console.log(`   ${component.description}`);
-    } else {
-      console.log("   (説明なし)");
-    }
-
-    console.log(`   ファイル: ${component.filePath}`);
-    console.log(""); // 空行
-  });
-}
-
-/**
- * コンポーネント一覧をJSONフォーマットで出力する
- * @param components コンポーネント情報の配列
- */
-export function printComponentsListAsJson(
-  components: ComponentSummary[]
-): void {
-  console.log(JSON.stringify(components, null, 2));
-}
-
-// サンプル実行用のコード
-if (require.main === module) {
-  const sampleFilePath = path.resolve(__dirname, "../sample/McpButton.vue");
-
-  parseVueComponent(sampleFilePath)
-    .then((info) => {
-      printComponentInfo(info);
-    })
-    .catch((err) => {
-      console.error("エラーが発生しました:", err);
-    });
 }
