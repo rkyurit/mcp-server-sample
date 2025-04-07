@@ -7,12 +7,6 @@
 ```bash
 cd vue-sfc-descriptor
 npm install
-
-# 環境設定
-cp .env.sample .env
-# .env ファイルを編集してコンポーネントディレクトリを設定
-# COMPONENTS_DIR=sample
-
 # ビルド
 npm run build
 ```
@@ -35,6 +29,26 @@ npx @modelcontextprotocol/inspector node ./build/index.js
 
 ## 解析する Vue コンポーネントの規約
 
+../vue-sample-for-mcp/.cursor/rules/vue-sfc-rule.mdc を見る。
+
 - **コンポーネントの役割**: スクリプトタグ直下のコメントに記述された説明
 - **Props**: `コンポーネント名Props` というインターフェースで定義されたプロパティ情報
 - **Emits**: `コンポーネント名Emits` というインターフェースで定義されたイベント情報
+
+## Claude Desktop の設定
+
+```
+{
+    "mcpServers": {
+        "vue-sfc-descriptor": {
+            "command": "/path/to/node",
+            "args": [
+                "/path/to/mcp-server/vue-sfc-descriptor/build/index.js"
+            ],
+            "env": {
+                "COMPONENTS_DIR": "/path/to/mcp-server/vue-sample-for-mcp/src/components"
+            }
+        }
+    }
+}
+```
