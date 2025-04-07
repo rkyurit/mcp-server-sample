@@ -1,0 +1,14 @@
+---
+description: VueのSFCを実装する際のルール
+globs: *.vue
+alwaysApply: false
+---
+
+- コンポーネント名には McpというPrefixをつけること [McpInput.vue](mdc:src/components/McpInput.vue)　など
+- タグの順序は script -> template -> style とすること
+- script setup 構文を使用し、 lang='ts'を必ずつけること
+- Propsの定義はtype declarationで行うこと(Emitsも同様)
+- definePropsのタイプパラメータに指定するinterfaceはdefinePropsの直前に`Vueコンポーネント名Props`という名称で定義したinterfaceを使うこと(例： [McpInput.vue](mdc:src/components/McpInput.vue) ), Emitsも同様
+- 適切にコメントを付与すること
+  - [McpInput.vue](mdc:src/components/McpInput.vue) と同じように、コンポーネント自体へのコメントと各々のprops/emitsへのコメントを記載すること
+- スタイルは極力 tailwindcssを用いること
